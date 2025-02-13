@@ -1,16 +1,133 @@
 const express = require("express");
-const { products } = require("./data");
+// const morgan = require("morgan");
+// const { logger, authorize } = require("./middleware");
 
+let { people } = require("./data");
+
+//middleware are functions that execute between the request and response object,
 const app = express();
 
-app.get("/", (req, res) => {
-  console.log("User hit the resource");
-  res.json(products);
+// static assets;
+
+app.use(express.static("./methods-public"));
+app.use(express.urlencoded({ extended: false }));
+
+app.use(express.json());
+app.get("/api/people", (req, res) => {
+  res.status(200).json({ success: true, data: people });
+});
+app.post("/api/people", (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res
+      .status(400)
+      .json({ success: false, msg: "Please provide name value" });
+  }
+  res.status(201).json({ success: true, person: name });
+});
+app.post("/login", (req, res) => {
+  const { name } = req.body;
+  if (name) {
+    return res.status(200).send(`welcome : ${name}`);
+  } else {
+    res.status(401).send("Please enter a name");
+  }
 });
 
+app.put("/api/people/:id", (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+
+  const person = people.find((person) => person.id === +id);
+
+  if (!person) {
+    return res
+      .status(400)
+      .json({ success: false, msg: "please provide name value" });
+  }
+  const newPeople = people.map((person) => {
+    if (person.id === +id) {
+      person.name = name;
+    }
+    return person;
+  });
+  res.status(200).json({ success: true, person: newPeople });
+});
+
+
+app.delete('/api/people/:id', (req, res)=>{
+  const { id } = req.params;
+  const person = people.find((person) => person.id === +id);
+  if (!person) {
+    return res
+      .status(404)
+      .json({ success: false, msg: `no person with id ${id}` });
+  }
+  const newPeople = people.filter((person)=> person.id !== +id);
+  return res.status(200).json({ success: true, data: newPeople})
+})
 app.listen(4999, () => {
   console.log("Server is running on port 4999");
 });
+
+// app.use([logger, authorize]);
+// app.use(morgan("dev"));
+
+// app.get("/", (req, res) => {
+//   res.send("home");
+// });
+// app.get("/about", (req, res) => {
+//   res.send("About");
+// });
+
+// app.get("/contact", (req, res) => {
+//   res.send("contact");
+// });
+
+// app.get("/details", (req, res) => {
+//   res.send("details");
+// });
+// app.get("/", (req, res) => {
+//   res.send('<h1>Home Page</h1><a href="/api/products">products</a>');
+// });
+// app.get("/api/products", (req, res) => {
+//   const newProducts = products.map((product) => {
+//     const { id, name, image } = product;
+//     return { id, name, image };
+//   });
+//   res.json(newProducts);
+// });
+
+// app.get("/api/products/:id", (req, res) => {
+//   const id = req.params.id;
+//   console.log(id);
+//   const singleProductId = products.find((product) => product.id === +id);
+//   if (!singleProductId) {
+//     return res.status(404).send("Product not found");
+//   }
+//   res.json(singleProductId);
+// });
+
+// app.get("/api/v1/query", (req, res) => {
+//   console.log(req.query);
+//   const { search, limit } = req.query;
+//   let sortedProducts = [...products];
+
+//   if (search) {
+//     sortedProducts = sortedProducts.filter((product) => {
+//       return product.name.startsWith(search);
+//     });
+//   }
+//   if (limit) {
+//     sortedProducts = sortedProducts.slice(0, +limit);
+//   }
+//   if (sortedProducts.length < 1) {
+//     // res.status(303).send("No products matched your search");
+//     return res.status(200).json({ success: true, data: [] });
+//   }
+//   return res.status(200).json(sortedProducts);
+//   // res.send("hello world");
+// });
 
 // app.get("/", (req, res) => {
 //   res.sendFile(path.resolve(__dirname, "./navbar-app/index.html"));
